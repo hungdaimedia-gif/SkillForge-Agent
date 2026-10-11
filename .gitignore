@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.venv/
+env/
+venv/
+
+# Environment & Runs
+.env
+runs/
+skills_wiki/.stats.sqlite
+*.sqlite
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local reference & archives
+_reference/
+SkillForge-Agent.zip

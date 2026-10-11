@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "skillforge": {
+      "type": "stdio",
+      "command": "G:\\SkillForge-Agent\\.venv\\Scripts\\python.exe",
+      "args": [
+        "G:\\SkillForge-Agent\\skillforge_cli.py",
+        "serve"
+      ],
+      "env": {
+        "SKILLFORGE_WIKI": "G:\\SkillForge-Agent\\skills_wiki"
+      }
+    }
+  }
+}
