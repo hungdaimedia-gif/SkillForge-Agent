@@ -12,6 +12,9 @@ venv/
 # Environment & Runs
 .env
 runs/
+# Downloaded videos/transcripts/frames (copyrighted, large) and resumable work
+sources_cache/
+work/
 skills_wiki/.stats.sqlite
 *.sqlite
 

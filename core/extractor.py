@@ -47,6 +47,33 @@ IMPORTANT:
 {SKILL_CONTRACT}"""
 
 
+_STR = {"type": "string"}
+BUNDLE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "name": _STR, "taxonomy_path": _STR, "description": _STR,
+                "tags": {"type": "array", "items": _STR},
+                # Free-form objects: JSON-encoded so the schema stays strict-compatible.
+                "params_schema_json": _STR, "example_params_json": _STR,
+                "runner": {"type": "string", "enum": ["python", "blender"]},
+                "expected_artifacts": {"type": "array", "items": _STR},
+                "expected_output": _STR, "source": _STR,
+            },
+            "required": ["name", "taxonomy_path", "description", "tags", "params_schema_json",
+                         "example_params_json", "runner", "expected_artifacts",
+                         "expected_output", "source"],
+            "additionalProperties": False,
+        },
+        "code": _STR,
+    },
+    "required": ["metadata", "code"],
+    "additionalProperties": False,
+}
+
+
 def _strip_fences(text: str) -> str:
     """Strip markdown code fences and extraneous text around JSON."""
     text = text.strip()
@@ -71,7 +98,12 @@ def parse_bundle(raw: str, source: str = "", visual_asset_path: Optional[Path | 
     if "metadata" not in data or "code" not in data:
         raise ValueError("Extractor JSON missing 'metadata' or 'code' key")
 
-    meta = SkillMetadata(**data["metadata"])
+    meta_raw = dict(data["metadata"])
+    for key in ("params_schema", "example_params"):
+        encoded = meta_raw.pop(f"{key}_json", None)
+        if encoded and key not in meta_raw:
+            meta_raw[key] = json.loads(encoded) if isinstance(encoded, str) else encoded
+    meta = SkillMetadata(**meta_raw)
     if source and not meta.source:
         meta.source = source
 
@@ -93,7 +125,12 @@ def extract_skill(
     hint = f"\nPreferred domain: {domain_hint}" if domain_hint else ""
     user_prompt = f"Resource Content:{hint}\n\n{resource_text}"
     logger.info("Extracting skill from resource (source=%s, domain=%s)", source or "inline", domain_hint)
-    raw = llm.complete(EXTRACT_SYSTEM, user_prompt)
+    if hasattr(llm, "complete_json"):
+        # Structured output: no regex-scraping JSON that embeds a whole script.
+        data = llm.complete_json(EXTRACT_SYSTEM, user_prompt, BUNDLE_SCHEMA)
+        raw = json.dumps(data)
+    else:
+        raw = llm.complete(EXTRACT_SYSTEM, user_prompt)
     bundle = parse_bundle(raw, source=source, visual_asset_path=visual_asset_path)
     logger.info("Successfully extracted skill: %s (%s)", bundle.metadata.name, bundle.metadata.id)
     return bundle

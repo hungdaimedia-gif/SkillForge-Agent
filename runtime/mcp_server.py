@@ -46,6 +46,14 @@ def get_skill_details(skill_id: str) -> dict[str, Any]:
     wiki = get_wiki()
     try:
         bundle = wiki.load(skill_id)
+        if bundle.metadata.kind == "knowledge":
+            return {
+                "success": True,
+                "metadata": bundle.metadata.model_dump(),
+                "skill_md": bundle.code_payload,
+                "files": wiki.list_files(skill_id),
+                "hint": "Open references/*.md or assets/* with read_skill_file when SKILL.md links them.",
+            }
         return {
             "success": True,
             "metadata": bundle.metadata.model_dump(),
@@ -55,6 +63,24 @@ def get_skill_details(skill_id: str) -> dict[str, Any]:
     except Exception as exc:
         logger.error("Error retrieving skill '%s': %s", skill_id, exc)
         return {"success": False, "error": str(exc), "skill_id": skill_id}
+
+
+@mcp.tool()
+def read_skill_file(skill_id: str, path: str = "SKILL.md") -> dict[str, Any]:
+    """Read a file inside a knowledge skill (SKILL.md, references/<x>.md, SOURCES.md).
+
+    Images under assets/ are returned as an absolute path to open with an image viewer.
+    """
+    wiki = get_wiki()
+    try:
+        if path.startswith("assets/"):
+            full = wiki._child(wiki._dir(skill_id), path)
+            return {"success": full.exists(), "skill_id": skill_id, "path": path, "image_path": str(full)}
+        return {"success": True, "skill_id": skill_id, "path": path,
+                "content": wiki.read_file(skill_id, path)}
+    except Exception as exc:
+        logger.error("Error reading '%s' of '%s': %s", path, skill_id, exc)
+        return {"success": False, "error": str(exc), "skill_id": skill_id, "path": path}
 
 
 @mcp.tool()
