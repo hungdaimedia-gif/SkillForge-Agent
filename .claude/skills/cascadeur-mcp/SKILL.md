@@ -76,9 +76,9 @@ Chi tiết + code đầy đủ: [references/recipes.md](references/recipes.md).
 
 ## 7. Điều chưa giải được (đừng đoán)
 
-- **Đưa camera về nhân vật:** `Camera.zoom_to_points([...])` chạy không lỗi nhưng khung nhìn
-  hầu như không đổi trong thử nghiệm; hộp bao lấy từ mọi object bị lệch vì có object phụ trợ.
-  Hướng chưa thử: lọc khớp theo tên rồi dùng `ViewportDomain.set_camera_struct`.
+- ~~Đưa camera về nhân vật~~ **ĐÃ GIẢI** (2026-10-14): hộp bao chỉ từ object có behaviour `Joint`, rồi
+  `vd = current_scene().active_viewport().domain_viewport(); cs = vd.camera_struct(); cs.target = c; cs.position = c + k*size; vd.set_camera_struct(cs)`
+  — xem `scripts/examples/camera_frame.py`. (`zoom_to_points` gần như không có tác dụng.)
 - **AutoPosing bốn chân** cần giấy phép Pro (Basic/Indie báo "not available").
 - **Danh sách action:** `ActionManager` chỉ có `call_action(name)`, không liệt kê được tên;
   tên đã biết từ script chính hãng: `Scene.Undo`.

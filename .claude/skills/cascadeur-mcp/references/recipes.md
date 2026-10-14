@@ -137,3 +137,10 @@ position, type) — chưa thử.
      `normalize_sections(scene)` + `scene_updater.run_update({pos.data_id()}, f)`.
    - Kiểm chứng bằng số: nâng `f_toe.L_MainPoint` 40 cm ở khung 10 ⇒ xương `f_toe.L` y 22,1→62,1,
      `forearm.L` tự gập (IK), móng phải không đổi.
+
+7. **Animation bước tại chỗ** (`step5_walk_in_place.py`): key ở các khung 0,5,…,40 trên mọi layer →
+   `fit_animation_size_by_layers()` → đặt vị trí 4 điểm móng (`f_toe.L/R_MainPoint`, `toe.L/R_MainPoint_r`)
+   lần lượt nhấc 25 cm ở khung 5/15/25/35, `head_MainPoint` gật, `tail.004_MainPoint` phe phẩy →
+   `run_update` mọi khung. Kiểm chứng: xương móng y 20–22 → 45–47 đúng thứ tự chân. Quay video:
+   `casc.screenshot(path, frame=f)` từng khung rồi ffmpeg ghép MP4/GIF.
+   Giới hạn: chỉ di chuyển điểm điều khiển (không AutoPosing, không AutoPhysics) nên thân đứng yên, cử động cứng.
