@@ -304,7 +304,10 @@ def fetch_video(url_or_id: str, cache_dir: Path | str = "sources_cache", lang: s
     if doc_file.exists():
         doc = SourceDoc.model_validate_json(doc_file.read_text(encoding="utf-8"))
         has_frames = any(s.frames for s in doc.sections)
-        if doc.extras.get("cache_version") == CACHE_VERSION and (
+        # A failed transcript ("none") must not be cached forever: 4 Cascadeur videos stayed
+        # empty and an agent then cited them anyway (2026-10-14). Retry on every fetch.
+        has_text = doc.transcript_source != "none"
+        if doc.extras.get("cache_version") == CACHE_VERSION and has_text and (
                 not frames or (doc.extras.get("max_frames") == max_frames and has_frames)):
             return doc
 
