@@ -102,3 +102,43 @@ Với mỗi dòng ⛔ trong output:
 Bàn giao: output đầy đủ của lệnh `--strict` (phải `STRICT: 0/...`), `check_knowledge.py`, số câu đã
 xoá / đổi mốc, `git status --short`. Tiêu chí PASS của Claude: cổng máy xanh **và** ≥ 9/10 mẫu ngẫu
 nhiên khớp nguồn.
+
+---
+
+# Vòng 3: CHƯA ĐẠT (2026-10-14)
+
+| Hạng mục | Kết quả |
+|---|---|
+| `--strict` | ✅ 0/452 — nhưng thuật ngữ `code`/in đậm giảm 338 → 262 trong khi chỉ bớt 3 dòng ⇒ nhiều chỗ **bỏ định dạng, giữ nội dung** (vd "Physics → Character Contacts" [K51 1:25] vẫn còn ở dạng chữ thường) |
+| Sửa đúng | ✅ phím `F` nay trích đúng [K41 4:40] ("press F on your keyboard"); Bezier Clamped [K18 6:55] |
+| Lỗi đã chỉ đích danh còn nguyên | ❌ `scene.layer_viewer().layer_id_by_object_id` (thật: `layers_viewer().layer_id_by_obj_id`); [K74 0:00] (chỉ có nhạc) |
+| Mẫu ngẫu nhiên 10 | ❌ **3 khớp · 4 một phần · 3 sai** (K35 2:00 nói về cài add-on; K39 3:15 nói về khuỷu tay; K38 2:30 nói về blend shape/camera) |
+
+**Gốc rễ:** câu được viết từ kiến thức chung rồi mới gắn mốc. Từ vòng 4, cổng máy bắt buộc **trích nguyên văn**.
+
+## Việc vòng 4 — trích nguyên văn cho MỌI trích dẫn
+
+Định dạng mới (bắt buộc cho mọi trích dẫn):
+
+```
+[K41 4:40 "press F on your keyboard"]
+```
+
+- Trong ngoặc kép: **3–25 từ chép đúng** từ lời thoại (tiếng Anh, như trong transcript) nằm quanh mốc.
+- Máy kiểm câu trích có thật gần mốc (chuẩn hoá chữ hoa/dấu câu). Không tìm thấy = trượt.
+- Câu tiếng Việt chỉ được nói **đúng điều câu trích nói** (có thể gộp nhiều trích dẫn). Câu nói thêm
+  điều không có trong câu trích ⇒ sửa lại hoặc xoá.
+
+Cách làm hiệu quả: **đi từ transcript ra**, không đi từ câu đã viết. Với mỗi file reference, mở
+transcript các video liên quan, chọn câu lời thoại chứa thông tin, rồi viết câu tiếng Việt dựa trên nó.
+Câu nào không tìm được lời thoại chứng minh ⇒ xoá (được phép giảm độ phủ, ít mà đúng).
+
+Cổng bắt buộc (phải thoát mã 0):
+
+```bash
+$PY scripts/audit_citations.py .claude/skills/cascadeur-animation work/cascadeur_manual/transcripts/sources.json work/cascadeur_manual/audit_v4.md --strict --quotes
+$PY scripts/check_knowledge.py .claude/skills/cascadeur-animation work/cascadeur_manual/transcripts/sources.json
+```
+
+Hiện tại: `GATE: 702 lỗi` (toàn bộ trích dẫn chưa có câu trích). Sửa thêm 2 lỗi đích danh ở bảng trên.
+Bàn giao: output đầy đủ 2 lệnh trên, số dòng trước/sau mỗi file, `git status --short`.

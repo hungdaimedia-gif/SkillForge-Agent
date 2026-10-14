@@ -50,6 +50,7 @@ def main() -> int:
         text = md.read_text(encoding="utf-8")
         n = 0
         for key, times in CIT.findall(text):
+            times = times.split('"')[0].strip()  # [K12 3:45 "quote"] → 3:45
             n += 1
             if key not in sources:
                 errors.append(f"{md.name}: unknown source [{key} {times}]")

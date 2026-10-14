@@ -37,6 +37,8 @@ def main() -> None:
     ap.add_argument("--window", type=float, default=25)
     ap.add_argument("--strict", action="store_true",
                     help="fail when a `code` or **bold** term of a cited line is absent from every cited window")
+    ap.add_argument("--quotes", action="store_true",
+                    help='require [K12 3:45 "verbatim words"] and verify the words occur near 3:45')
     a = ap.parse_args()
     if hasattr(__import__("sys").stdout, "reconfigure"):
         __import__("sys").stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -61,6 +63,10 @@ def main() -> None:
             n_lines += 1
             out.append(f"## {md.relative_to(a.skill_dir)}:{no}")
             out.append(f"> {line.strip()}")
+            if a.quotes:
+                for problem in quote_problems(line, segs_by_key, a.window):
+                    strict_fail.append(f"{md.relative_to(a.skill_dir)}:{no}  {problem}")
+                    out.append(f"- ⛔ QUOTE: {problem}")
             if a.strict:
                 missing = unsupported_terms(line, cits, segs_by_key, sources, a.window)
                 if missing:
@@ -68,6 +74,7 @@ def main() -> None:
                     strict_fail.append(f"{where}  thiếu trong nguồn: {', '.join(missing)}")
                     out.append(f"- ⛔ STRICT: không thấy trong lời thoại quanh mốc: {', '.join(missing)}")
             for key, times in cits:
+                times = times.split('"')[0].strip()
                 segs = segs_by_key.get(key, [])
                 if not segs:
                     n_empty += 1
@@ -86,12 +93,45 @@ def main() -> None:
     a.out.parent.mkdir(parents=True, exist_ok=True)
     a.out.write_text("\n".join(out) + "\n", encoding="utf-8")
     print(f"{n_lines} dòng có trích dẫn · {n_empty} trích dẫn tới video không có transcript → {a.out}")
-    if a.strict:
-        print(f"STRICT: {len(strict_fail)}/{n_lines} dòng có thuật ngữ (code/in đậm) không xuất hiện ở nguồn")
+    if a.strict or a.quotes:
+        print(f"GATE: {len(strict_fail)} lỗi trên {n_lines} dòng có trích dẫn "
+              f"({'strict ' if a.strict else ''}{'quotes' if a.quotes else ''})")
         for s in strict_fail[:400]:
             print("  -", s)
         if strict_fail or n_empty:
             raise SystemExit(1)
+
+
+QCIT = re.compile(r'\[(K\d+)\s+(\d{1,2}:\d{2}(?::\d{2})?)\s+"([^"]{8,})"\]')
+
+
+def _flat(text: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9']+", text.lower().replace("’", "'")))
+
+
+def quote_problems(line, segs_by_key, window) -> list[str]:
+    """Every citation must be [K12 3:45 "verbatim words"]; the words must occur near 3:45.
+
+    Forces grounding: the writer has to find the real sentence before citing it, which makes
+    'write from general knowledge, then attach any timestamp' impossible to pass.
+    """
+    problems = []
+    plain = [c for c in CIT.findall(line) if '"' not in c[1]]
+    for key, times in plain:
+        problems.append(f"[{key} {times}] thiếu trích nguyên văn: viết [{key} {times.split(',')[0].strip()} \"câu đúng từ lời thoại\"]")
+    for key, t, quote in QCIT.findall(line):
+        segs = segs_by_key.get(key, [])
+        s = secs(t)
+        near = " ".join(x["text"] for x in segs
+                        if x.get("start_s") is not None and s - window * 2 <= x["start_s"] <= s + window)
+        q = _flat(quote)
+        if len(q.split()) < 3:
+            problems.append(f'[{key} {t}] trích quá ngắn: "{quote}" (≥ 3 từ)')
+        elif len(q.split()) > 25:
+            problems.append(f'[{key} {t}] trích quá dài (> 25 từ)')
+        elif q not in _flat(near):
+            problems.append(f'[{key} {t}] không tìm thấy "{quote}" quanh mốc')
+    return problems
 
 
 _TERM = re.compile(r"`([^`]+)`|\*\*([^*]+)\*\*")
@@ -118,6 +158,7 @@ def unsupported_terms(line, cits, segs_by_key, sources, window) -> list[str]:
         return []
     haystack = []
     for key, times in cits:
+        times = times.split('"')[0].strip()
         segs = segs_by_key.get(key, [])
         haystack.append(sources.get(key, {}).get("title", ""))
         for t in times.split(","):
