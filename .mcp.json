@@ -10,6 +10,10 @@
       "env": {
         "SKILLFORGE_WIKI": "G:\\SkillForge-Agent\\skills_wiki"
       }
+    },
+    "cascadeur": {
+      "type": "http",
+      "url": "http://127.0.0.1:8765/mcp"
     }
   }
 }
