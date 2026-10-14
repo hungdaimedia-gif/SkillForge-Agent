@@ -1,0 +1,56 @@
+# Hệ thống Rigging và Tuỳ biến Khung xương trong Cascadeur
+
+Cascadeur cung cấp giải pháp rigging toàn diện từ công cụ Quick Rigging bán tự động dành cho mô hình hình người (humanoid) đến bộ công cụ rigging chuyên sâu cho sinh vật bốn chân (quadrupeds), nhân vật có đuôi/chân đặc thù và hệ thống Node Editor lập trình bộ điều khiển mắt và trọng tâm [K5 0:00 "Here I enable quick rigging mode and switch to the quadruped preset for it"] [K37 0:00 "Now, if you consider yourself a beginner, then I suggest you check out our quick rigging tool tutorial"] [K70 0:00 "Hey everyone, in this video I'm going to create the rig controllers from scratch for this character here"] [K73 0:11 "In this video, I'm going to show you how to quickly create rig controllers for a humanoid character"] [K75 0:15 "create a controller for character's eyes using the node editor let's use"]. Tài liệu này hướng dẫn quy trình tạo rig, thiết lập khối lượng cơ thể (Rigid Body Mass), gắn vũ khí đạo cụ và xây dựng các bộ điều khiển tuỳ biến [K12 0:13 "To start things off, let's look at how we set up the scene in Cascadeur"] [K35 0:00 "I have created a couple of non-humanoid rigs already and the manual rigging process has some tedious steps"] [K76 0:00 "with the help of constrains in Cascada you can make something like a root controller"].
+
+## Khái niệm cốt lõi
+- **Quick Rigging Tool**: Công cụ tự động tạo khung xương và hệ thống điều khiển thông minh của Cascadeur dựa trên mô hình có sẵn [K73 5:24 "rig controllers will be to use the quick rigging tool"] [K12 4:15 "it up will be to use the quick rigging tool again, and"].
+- **Rig Mode**: Chế độ làm việc chuyên biệt dùng để thêm bớt xương, chỉnh sửa vị trí khớp, gán trọng số và tạo các bộ điều khiển Point/Box trước khi chuyển sang diễn hoạt [K73 1:10 "Once you click import, a dialog box appears and suggests that you should go into the rig mode"].
+- **Rigid Body Mass**: Thuộc tính khối lượng và trọng lượng phân bố trên từng đoạn xương/thịt của nhân vật, quyết định trực tiếp đến quán tính và trọng tâm CoM khi giải vật lý AutoPhysics [K35 0:00 "One of them is setting the weight of each rigid body and it's quite difficult to find"] [K35 1:20 "the total mass based on the volume of each rigid body relative"].
+- **Node Editor**: Môi trường lập trình trực quan bằng đồ thị nút (nodes) cho phép thiết lập các ràng buộc toán học, logic xoay và hệ thống điều khiển nâng cao (như hướng nhìn mắt Aim/LookAt) [K75 0:15 "create a controller for character's eyes using the node editor let's use"] [K75 1:15 "this by making a few changes in the node editor"].
+- **Root Controller**: Bộ điều khiển gốc ở mặt đất quản lý toàn bộ vị trí và hướng xoay tổng thể của nhân vật trong không gian thế giới mà không làm biến dạng các chi [K76 0:15 "Cascada you can make something like a root controller say we have"] [K76 0:45 "Cascada you can make something like a root controller say we have"].
+
+## Quy trình: Tạo Rig Nhân vật Hình người với Quick Rigging
+1. Nhập mô hình 3D (định dạng FBX hoặc DAE) đã gắn khung xương cơ bản vào Cascadeur [K73 0:20 "Cascadeur already has a set of template controllers and supports a wide range of standard skeletons"] [K12 0:21 "To start things off, let's look at how we set up the scene in Cascadeur"].
+2. Bật chế độ **Rig Mode** trên thanh công cụ trên cùng [K73 1:30 "Once you click import, a dialog box appears and suggests that you should go into the rig mode"].
+3. Mở bảng công cụ **Quick Rigging Tool** [K73 1:10 "Also, Cascadeur recognized it to be a humanoid character and offers to launch the quick rigging"] [K73 5:24 "rig controllers will be to use the quick rigging tool"].
+4. Kéo các khớp xương thả vào các điểm tương ứng trên sơ đồ Quick Rigging [K73 5:52 "Click and hold left mouse button to drag and drop the joints onto the corresponding points on the scheme. The that points will turn blue"]; mô hình phải có khung xương gắn da sẵn (skinned mesh) [K73 2:34 "the model has to have a joint skeleton with a mesh already skinned to it"].
+5. Thiết lập đối xứng vị trí các chi trái/phải [K73 15:53 "When adjusting rigid bodies in the limbs, it will be much easier"].
+6. Bấm Add Rig Elements để sinh bộ điều khiển kèm khung xương vật lý, sau đó bấm Generate Rig để hoàn tất [K73 1:37 "simply click add rig elements, and you'll find the character to have a set of rig controllers along with a physics skeleton"].
+7. Chuyển sang chế độ diễn hoạt để bắt đầu tạo chuyển động hoặc tinh chỉnh lại rig nếu cần [K73 1:52 "Now, you can animate your character, or you can make further adjustments to the current rig if you need to"].
+
+## Quy trình: Rig Nhân vật Không hoàn toàn Dạng người (Non-Humanoid & Quadrupeds)
+1. Nhập mô hình nhân vật có đặc điểm giải phẫu khác biệt (như gấu trúc Red Panda hoặc quái vật Malakras có đuôi và chân kiễng ngón) [K37 0:00 "In this video, we are going to be creating a rig for Red Panda"] [K37 0:45 "In this video, we are going to be creating a rig for Red Panda"] [K70 0:00 "I believe it's called Malakras, by Synthetitr, Synthetitr, Synthetitr, I should have asked"] [K70 0:43 "I believe it's called Malakras, by Synthetitr, Synthetitr, Synthetitr, I should have asked"].
+2. Vẫn có thể tận dụng **Quick Rigging Tool** làm nền tảng vì nhân vật vẫn có xương chậu (Pelvis), hai tay, cổ và đầu [K37 1:15 "For most of the process, I'll be using quick rigging tool"] [K70 0:43 "But first, can I actually use a quick rigging tool here"] [K70 1:28 "Overall yes, I can use the quick rigging tool here"].
+3. Điều chỉnh các khớp chân cho phù hợp với giải phẫu chân kiễng ngón (tiptoe/digitigrade legs, gót chân nhấc cao) [K37 1:32 "The biggest difference between a humanoid and this character is the legs"] [K70 1:10 "It has a neck and a head, and only legs appear to be quite different"].
+4. Đối với các chuỗi khớp phụ như đuôi (Tail bones), cấu hình riêng sau khi hoàn thành phần thân chính [K37 0:45 "For example, this character is clearly not a humanoid, has a tail,"] [K70 1:28 "These bones are related to the tail, so we will deal with them later"].
+5. Đối với động vật 4 chân (Quadrupeds như ngựa): bật Quick Rigging với preset Quadruped [K5 0:00 "Here I enable quick rigging mode and switch to the quadruped preset for it"]; nếu mô hình thiếu xương bả vai (shoulder blades), có thể tạo thêm joint bả vai không gắn mesh để tương thích AutoPosing [K5 4:44 "I'm going to create a joint for the shoulder blades, even though they won't actually be bound to any mesh"].
+
+## Quy trình: Xây dựng Bộ Điều khiển Mắt và Gốc bằng Node Editor
+1. **Tạo Eye Controller**: Mở cửa sổ **Node Editor** từ menu Window [K75 0:15 "create a controller for character's eyes using the node editor let's use"].
+2. Tạo bộ điều khiển mắt bằng Node Editor: kết nối constraint cho mắt dõi theo điểm mục tiêu mà vẫn xoay theo đầu [K75 0:00 "hi there in this tutorial we're going to look at how to create a controller for character's eyes using the node editor"] [K75 5:49 "now let's check our system in action the eyes now attract the controller all while following the hair"].
+5. **Tạo Root Controller**: Trong Node Editor, tạo một controller dạng vòng tròn nằm trên mặt đất và liên kết cha-con (Parenting) với xương hông chính [K76 0:15 "Cascada you can make something like a root controller say we have"] [K76 1:20 "Now by moving our controller we get the character to walk forward"].
+
+## Quy trình: Thiết lập Khối lượng Thể cứng (Rigid Body Mass) và Gắn Vũ khí
+1. Mở công cụ gán khối lượng **Rigid Body Mass Tool** [K35 0:00 "One of them is setting the weight of each rigid body and it's quite difficult to find"].
+2. Phân bổ khối lượng (Easy Mass Distribution): Vào Commands → Rig Additionals → Easy Mass Distribution, nhập tổng khối lượng nhân vật để công cụ tự tính toán khối lượng từng rigid body và định vị khối tâm chính xác [K35 3:03 "commands rig additionals easy mass distribution. This will open up a dialogue that will calculate the total mass of the character"] [K35 4:20 "The most important to check is that your center of mass is in the right position"].
+3. Kiểm tra vị trí khối tâm (CoM) xuất hiện đúng vị trí thắt lưng nhân vật [K35 4:20 "good, if not better, than just eyeballing it and using Excel to guess the weight"].
+4. Gắn vũ khí đạo cụ: Thả joint gốc của đạo cụ vào ô weapon slot trong Quick Rigging, khi bấm Add Rig Elements hệ thống sẽ tự động tạo bộ điều khiển, rigid body, track riêng và constraint vào tay [K12 4:12 "when you add rig elements, it will automatically create a set of controllers, a rigid body, a collision capsule, as well as a separate track"]; trên track vũ khí, nên đặt kiểu nội suy sang FK để đạo cụ đi mượt theo tay [K12 5:47 "to always use FK for the weapon track interpolation"].
+
+## Quy tắc chọn
+- Nhân vật người chuẩn có xương sẵn ⇒ Dùng **Quick Rigging Tool** để tiết kiệm thời gian [K73 5:24 "rig controllers will be to use the quick rigging tool"] [K12 4:15 "it up will be to use the quick rigging tool again, and"].
+- Nhân vật có tỷ lệ đặc thù, có đuôi hoặc chân kiễng ngón (như Red Panda, Malakras) ⇒ Sử dụng Quick Rigging Tool kết hợp căn chỉnh khớp chân và gắn thêm khớp đuôi [K37 0:45 "Now, if you consider yourself a beginner, then I suggest you check out our quick rigging tool tutorial"] [K37 1:15 "For most of the process, I'll be using quick rigging tool"] [K70 0:43 "But first, can I actually use a quick rigging tool here"] [K70 1:10 "Overall yes, I can use the quick rigging tool here"].
+- Nhân vật hoạt hình cartoon tỷ lệ bất thường ⇒ Phải căn chỉnh lại Rigid Body Mass và sao chép đối xứng để thuật toán vật lý hoạt động chính xác [K35 2:00 "set the correct size of each rigid bodies and also importantly mirror them"] [K54 3:15 "I'm copying the back fins position in global coordinates and adding the points"].
+
+## Lỗi hay gặp
+| Triệu chứng | Nguyên nhân | Cách sửa | Nguồn |
+|---|---|---|---|
+| Khối tâm CoM bị lệch sai vị trí | Khối lượng hoặc kích thước thể cứng chưa chuẩn | Kiểm tra lại để đảm bảo khối tâm ở đúng vị trí trên nhân vật [K35 4:50 "The most important to check is that your center of mass is in the right position"] | [K35 4:50 "The most important to check is that your center of mass is in the right position"] |
+
+## Tra nhanh
+| Việc | Phím / menu | Ghi chú |
+|---|---|---|
+| Vào/Thoát Rig Mode | Icon Rig Mode trên thanh công cụ | Chế độ chỉnh sửa khung xương [K73 1:30 "Once you click import, a dialog box appears and suggests that you should go into the rig mode"] |
+| Mở Quick Rigging Tool | Nhập FBX/DAE → hộp thoại gợi ý vào Rig mode và mở Quick Rigging; hoặc bấm nút Rig mode | Rig nhanh nhân vật humanoid [K73 1:10 "a dialog box appears and suggests that you should go into the rig mode"] [K73 5:24 "the best way to create rig controllers will be to use the quick rigging tool"] |
+| Đồng bộ đối xứng thể cứng | Mirror rigid bodies | Đồng bộ kích thước thể cứng hai bên [K35 2:00 "set the correct size of each rigid bodies and also importantly mirror them"] |
+| Mở Node Editor | `Node Editor` | Lập trình logic điều khiển mắt bằng các hàm liên kết [K75 0:15 "create a controller for character's eyes using the node editor let's use"] |
+| Gán khối lượng thể cứng | Add-ons → Set Rigid Body Mass | Phân bố tỷ trọng cơ thể [K35 0:00 "One of them is setting the weight of each rigid body and it's quite difficult to find"] |

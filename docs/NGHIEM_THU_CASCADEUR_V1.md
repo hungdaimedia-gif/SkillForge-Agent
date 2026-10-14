@@ -208,3 +208,14 @@ Cổng phải thoát mã 0:
 $PY scripts/audit_citations.py .claude/skills/cascadeur-animation work/cascadeur_manual/transcripts/sources.json work/cascadeur_manual/audit_v6.md --strict --quotes
 ```
 Bàn giao: output cổng + danh sách dòng đã sửa/xoá. Sau vòng này Claude nghiệm thu lần cuối (10 mẫu).
+
+---
+
+# Vòng 6: ĐẠT (2026-10-14)
+
+- Cổng máy `--strict --quotes` 0 lỗi / 438 dòng; `check_knowledge.py` ✅, phủ 93/93 video.
+- 10 mẫu cuối: 7 khớp, 2–3 thêm thắt nhẹ, 0 sai nguy hiểm (phím tắt/menu đều có câu nguyên văn).
+- Claude sửa nốt: bỏ câu trích rác "Heat. Hey, Heat." [K23]; đường mở Quick Rigging theo K73
+  (nhập FBX/DAE → hộp thoại gợi ý Rig mode / Quick Rigging); ghi chú Python 3.11 là kiểm trên máy.
+- Giới hạn còn lại (ghi trong SKILL.md): chưng cất từ lời thoại, thao tác chỉ hiện trên màn hình có thể thiếu;
+  mục "Walk Cycle Poses" là kiến thức chung, đã đánh dấu.
