@@ -183,3 +183,28 @@ hỏi đúng một câu: **"Chỉ đọc câu trích, có suy ra được câu t
 
 Cổng máy vẫn phải xanh. Bàn giao: số dòng giữ / cắt / đổi câu trích / xoá, output 2 cổng, `git status --short`.
 Claude sẽ lấy 10 mẫu **trong chính danh sách trên** + 10 mẫu ngẫu nhiên; PASS khi ≥ 9/10 ở cả hai.
+
+---
+
+# Vòng 5: GẦN ĐẠT (2026-10-14)
+
+| Hạng mục | Kết quả |
+|---|---|
+| Cổng máy | ✅ 0 lỗi (trước khi thêm luật câu trích rác) |
+| 10 mẫu nghi vấn / 10 mẫu ngẫu nhiên | ⚠️ 7 khớp + 3 thêm thắt nhỏ / 8 khớp + 1 thêm thắt + 1 sai |
+| Claude đã tự sửa | Viết lại toàn bộ **quy trình walk cycle** trong `workflows.md` theo K40 (bản cũ là lý thuyết chung "32 khung/30 fps, Contact–Down–Passing–Up" gắn câu trích không liên quan); bỏ "WAV", "khẩu hình" (K62 không nói); nối dài câu trích K41 4:53 cho phần sao chép key |
+| Luật mới trong `--quotes` | Câu trích là **lời chào / kêu gọi like** ("please support us by liking this video", "Hi and welcome to…") bị coi là lỗi — hiện **11 lỗi** |
+
+## Việc vòng 6 (ngắn)
+
+1. Sửa 11 lỗi câu trích rác do cổng báo: thay bằng câu lời thoại thật chứng minh câu tiếng Việt (tìm trong transcript), không có thì xoá câu.
+2. `workflows.md` mục "Khái niệm cốt lõi" → **Walk Cycle Poses** (Contact/Down/Passing/Up): K40 không dạy 4 tư thế này; câu trích hiện tại nói về `Ctrl`, IK/FK, toe points ⇒ xoá cả mục, hoặc ghi "(kiến thức hoạt hình chung, không từ nguồn)" và bỏ trích dẫn.
+3. `workflows.md` "Quy trình 2" bước 4 (Timing) không có trích dẫn ⇒ tìm nguồn hoặc xoá.
+4. `physics.md` các dòng trích `[K52 0:00 "Hello everyone, in the newly released version…"]` (Ragdoll & Colliders, Pin Collision) và `[K46 0:00 …]` "Advanced Ragdoll Workflow… phản xạ tự vệ" ⇒ thay câu trích đúng hoặc cắt câu cho vừa nguồn.
+5. Không đụng đoạn walk cycle 1–12 Claude vừa viết lại (đã kiểm từng câu trích).
+
+Cổng phải thoát mã 0:
+```bash
+$PY scripts/audit_citations.py .claude/skills/cascadeur-animation work/cascadeur_manual/transcripts/sources.json work/cascadeur_manual/audit_v6.md --strict --quotes
+```
+Bàn giao: output cổng + danh sách dòng đã sửa/xoá. Sau vòng này Claude nghiệm thu lần cuối (10 mẫu).

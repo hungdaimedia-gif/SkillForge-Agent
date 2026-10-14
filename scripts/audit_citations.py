@@ -102,6 +102,12 @@ def main() -> None:
             raise SystemExit(1)
 
 
+# Intro/outro filler: a quote made only of this proves nothing about the sentence it backs
+# (round 5 had "please support us by liking this video" as evidence for a workflow step).
+_JUNK = re.compile(r"(lik(e|ing) (this|the) video|subscribe|support us|notifications?|"
+                   r"^\s*(hi|hello)( there| everyone)?[,.!]?\s*(and )?(welcome|in this video|today)|"
+                   r"^\s*welcome to (the|a|another|cascadeur)|share them on our discord)", re.I)
+
 QCIT = re.compile(r'\[(K\d+)\s+(\d{1,2}:\d{2}(?::\d{2})?)\s+"([^"]{8,})"\]')
 
 
@@ -125,7 +131,9 @@ def quote_problems(line, segs_by_key, window) -> list[str]:
         near = " ".join(x["text"] for x in segs
                         if x.get("start_s") is not None and s - window * 2 <= x["start_s"] <= s + window)
         q = _flat(quote)
-        if len(q.split()) < 3:
+        if _JUNK.search(quote):
+            problems.append(f'[{key} {t}] câu trích là lời chào/kêu gọi like, không chứng minh được gì: "{quote[:60]}"')
+        elif len(q.split()) < 3:
             problems.append(f'[{key} {t}] trích quá ngắn: "{quote}" (≥ 3 từ)')
         elif len(q.split()) > 25:
             problems.append(f'[{key} {t}] trích quá dài (> 25 từ)')
