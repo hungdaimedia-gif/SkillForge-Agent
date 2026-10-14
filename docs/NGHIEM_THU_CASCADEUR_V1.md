@@ -65,3 +65,40 @@ Luật như cũ: không xoá file ngoài skill, không commit/push, không sửa
 3. Kết quả tải lại 4 video.
 4. `quiz.md` mới.
 5. `git status --short`.
+
+---
+
+# Vòng 2: CHƯA ĐẠT (2026-10-14)
+
+| Hạng mục | Kết quả |
+|---|---|
+| Tải lại 4 video "rỗng" | ✅ cả 4 **có lời thoại** (whisper 4–12 nghìn ký tự) — nhận định "không lời thoại" ở vòng 1 là sai |
+| `check_knowledge.py`, `audit_citations.py` | ✅ 93/93 video, 0 trích dẫn tới video rỗng |
+| Mẫu ngẫu nhiên mới 12 trích dẫn | ❌ **0 khớp hẳn · 6 một phần · 6 sai**. Vẫn còn đúng lỗi đã chỉ ở vòng 1 (phím `F` [K18 0:48]); menu bịa "Physics → Character Contacts" [K51 1:25], "Commands → Live Link → Connect 127.0.0.1" [K7 1:30]; [K74 0:00] chỉ có tiếng nhạc; tên hàm sai `layer_viewer().layer_id_by_object_id` (thật: `layers_viewer().layer_id_by_obj_id`) |
+| Bảng soát `audit.md` | ❌ 301 ✅ / 128 ✏️ / 26 🔁 / **0 ❌** — đánh dấu cho qua, không phải soát thật |
+| `audit_citations.py --strict` (mới) | ❌ **92/455 dòng** có thuật ngữ `code`/**in đậm** không xuất hiện trong lời thoại quanh mốc |
+
+## Việc vòng 3 — cổng máy, không tự chấm
+
+Cổng bắt buộc (phải thoát mã 0):
+
+```bash
+$PY scripts/audit_citations.py .claude/skills/cascadeur-animation work/cascadeur_manual/transcripts/sources.json work/cascadeur_manual/audit_v3.md --strict
+```
+
+`--strict`: mọi thuật ngữ viết trong `code` hoặc **in đậm** (phím tắt, nút, menu, tool, tên hàm)
+phải có **đủ các từ tiếng Anh** của nó trong lời thoại quanh mốc trích (hoặc tiêu đề video đó).
+
+Với mỗi dòng ⛔ trong output:
+1. Tìm thuật ngữ trong transcript của video đó (`work/cascadeur_manual/transcripts/*.txt`, tìm theo
+   chữ). Thấy ⇒ **đổi mốc** cho đúng chỗ được nói. Không thấy ở video nào ⇒ **xoá thuật ngữ / cả câu**.
+2. **Không** được lách bằng cách bỏ định dạng `code`/in đậm mà giữ nguyên nội dung bịa.
+   Claude sẽ kiểm mẫu ngẫu nhiên phần chữ thường; lách = trượt nghiệm thu.
+3. Câu không có thuật ngữ nhưng nói điều nguồn không nói (lời khuyên, "lỗi phổ biến nhất"…) ⇒ xoá
+   hoặc ghi "(gợi ý, không từ nguồn)" không kèm trích dẫn.
+4. Code/API: chỉ giữ tên hàm có trong `.claude/skills/cascadeur-mcp/references/api-index.md`
+   hoặc `api_document.py`.
+
+Bàn giao: output đầy đủ của lệnh `--strict` (phải `STRICT: 0/...`), `check_knowledge.py`, số câu đã
+xoá / đổi mốc, `git status --short`. Tiêu chí PASS của Claude: cổng máy xanh **và** ≥ 9/10 mẫu ngẫu
+nhiên khớp nguồn.
