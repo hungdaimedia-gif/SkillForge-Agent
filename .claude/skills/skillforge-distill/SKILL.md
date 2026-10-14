@@ -43,6 +43,12 @@ Chi tiết: [references/troubleshooting.md](references/troubleshooting.md).
   `$PY -m yt_dlp --flat-playlist --print "%(playlist_index)s|%(duration_string)s|%(title)s" "<URL>"`
 - Đọc mô tả video: nếu có dòng kiểu "guide đã cập nhật" ⇒ phần mềm có thể **đã đổi phiên bản**;
   ghi chú để nói với người dùng.
+- **Trang khoá học nhúng YouTube** (vd cascadeur.com/tutor): lấy danh mục chính thức (thường có
+  API/JSON phía sau trang) thành file `manifests/<tên>.urls` — mỗi dòng 1 URL, `#` cho ghi chú
+  chuyên mục/cấp độ. Danh mục đã được biên tập ⇒ tốt hơn quét cả kênh. Rồi so với kênh để lập
+  file bổ sung chỉ gồm bài hướng dẫn mới chưa có trong danh mục; bỏ trailer, feature highlights,
+  showreel và bài cho phiên bản cũ (mâu thuẫn giao diện hiện tại). Ví dụ có sẵn:
+  `manifests/cascadeur_tutor.urls` + `manifests/cascadeur_channel_extra.urls`.
 - Sách: kiểm tra có lớp chữ, có mục lục; ghi nhận bản quyền (skill chỉ được **diễn giải**).
 - ⛔ Báo người dùng: số nguồn, thời lượng/số trang, rủi ro phiên bản, ước lượng số lần gọi
   mô hình (≈ số video/chương + 1 + 3 × số skill).
@@ -111,7 +117,7 @@ nơi đã export, và các file cache người dùng có thể tự xoá (kèm �
 | Việc | Lệnh |
 |---|---|
 | Kiểm tra môi trường | `$PY <thư-mục-skill>/scripts/check_env.py --repo <SkillForge-Agent> [--ping]` |
-| Tải nguồn | `$PY skillforge_cli.py fetch "<URL\|file>" [--limit N] [--no-frames]` |
+| Tải nguồn | `$PY skillforge_cli.py fetch "<URL\|file\|danh-sach.urls>" [--limit N] [--no-frames]` |
 | Chưng cất | `$PY skillforge_cli.py distill "<URL\|file>"... --domain X --lang vi` |
 | Viết lại 1 skill / lập lại kế hoạch | `... distill ... --redo <tên-skill>` / `--redo plan` |
 | Bỏ quiz (nhanh, rẻ, chỉ còn cổng kiểm) | `... distill ... --no-eval` |

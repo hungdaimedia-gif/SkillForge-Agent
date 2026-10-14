@@ -572,7 +572,9 @@ def distill(docs: list[SourceDoc], llm: Any, wiki: Any, domain: str,
         cache = work / "units" / f"{slugify(sec.section_id, sep='_')}.json"
         cached = None if force else _read_json(cache)
         if cached is not None:
-            return key, sec.section_id, [KnowledgeUnit(**u) for u in cached]
+            # The same video can be S3 in one collection and S41 in another: re-key
+            # cached units, or citations would point at the wrong source.
+            return key, sec.section_id, [KnowledgeUnit(**{**u, "source_key": key}) for u in cached]
         units = map_section(llm, doc, sec, key)
         _write_json(cache, [u.model_dump() for u in units])
         log(f"  map {key} {doc.title[:50]} / {sec.title[:30]}: {len(units)} units")

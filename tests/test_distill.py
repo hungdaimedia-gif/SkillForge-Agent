@@ -156,6 +156,22 @@ def test_json3_parsing_dedupe_and_merge(tmp_path: Path) -> None:
     assert merged[0].text == "hello press K"
 
 
+def test_urls_manifest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import core.sources as S
+
+    seen = []
+    monkeypatch.setattr(S, "fetch_video", lambda url, **kw: seen.append(url) or SourceDoc(
+        doc_id=url[-11:], kind="youtube", title=url, url=url))
+    f = tmp_path / "course.urls"
+    f.write_text("# catalogue\nhttps://www.youtube.com/watch?v=aaaaaaaaaaa  # Physics | 5:00\n\n"
+                 "https://www.youtube.com/watch?v=bbbbbbbbbbb\n", encoding="utf-8")
+    docs = S.acquire(str(f), cache_dir=tmp_path)
+    assert seen == ["https://www.youtube.com/watch?v=aaaaaaaaaaa",
+                    "https://www.youtube.com/watch?v=bbbbbbbbbbb"]
+    assert [d.extras["playlist_index"] for d in docs] == [1, 2]
+    assert len(S.acquire(str(f), cache_dir=tmp_path, limit=1)) == 1
+
+
 def test_frame_times_prefers_chapters_and_spacing() -> None:
     times = frame_times(100.0, [{"start_time": 0}, {"start_time": 50}], max_frames=5)
     assert (2.0, "chapter") in times and (52.0, "chapter") in times
@@ -249,6 +265,21 @@ def test_distill_end_to_end_resumable(tmp_path: Path) -> None:
     assert not mcp_server.read_skill_file(skill_id, "../../skill.json")["success"]
     res_run = asyncio.run(run_skill(wiki, skill_id))
     assert not res_run.success and "knowledge skill" in res_run.stderr
+
+
+def test_cached_units_are_rekeyed_when_source_order_changes(tmp_path: Path) -> None:
+    doc = make_doc(tmp_path)
+    other = make_doc(tmp_path, vid="zzzzzzzzzzz", title="Other video")
+    wiki = SkillWiki(tmp_path / "wiki")
+    llm = FakeKnowledgeLLM()
+    D.distill([doc], llm, wiki, domain="cascadeur", work_dir=tmp_path / "work", workers=1,
+              run_eval=False, log=lambda _: None)
+    # Now the same video is the 2nd source: its cached units must become S2.*
+    D.distill([other, doc], llm, wiki, domain="cascadeur", work_dir=tmp_path / "work", workers=1,
+              run_eval=False, log=lambda _: None)
+    units = json.loads((tmp_path / "work" / "cascadeur" / "units.json").read_text(encoding="utf-8"))
+    assert {u["source_key"] for u in units if u["unit_id"].startswith("S2.")} == {"S2"}
+    assert all(u["unit_id"].split(".")[0] == u["source_key"] for u in units)
 
 
 def test_gate_rejects_invented_anchor(tmp_path: Path) -> None:
