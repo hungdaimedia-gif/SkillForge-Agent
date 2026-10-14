@@ -142,3 +142,44 @@ $PY scripts/check_knowledge.py .claude/skills/cascadeur-animation work/cascadeur
 
 Hiện tại: `GATE: 702 lỗi` (toàn bộ trích dẫn chưa có câu trích). Sửa thêm 2 lỗi đích danh ở bảng trên.
 Bàn giao: output đầy đủ 2 lệnh trên, số dòng trước/sau mỗi file, `git status --short`.
+
+---
+
+# Vòng 4: GẦN ĐẠT (2026-10-14)
+
+| Hạng mục | Kết quả |
+|---|---|
+| `--strict --quotes`, `check_knowledge.py` | ✅ 0 lỗi / 452 dòng, 834 trích dẫn đều có câu nguyên văn có thật |
+| 3 lỗi đích danh (layer_viewer, Character Contacts, K74 0:00) | ✅ đã hết |
+| Mẫu ngẫu nhiên 10 (đọc nghĩa) | ⚠️ **~6 khớp · 1 một phần · 3 câu trích không chứng minh câu tiếng Việt** |
+
+Lỗi còn lại không còn là "bịa mốc" mà là **câu trích có thật nhưng không nói điều câu tiếng Việt nói**, vd:
+- "AutoPhysics … dựa trên bảo toàn động lượng" kèm `"It's finally time for the most"` [K2 14:44].
+- "Chọn controller trong viewport" kèm câu về `Shift + S` [K25 3:57].
+- Thống kê: 140 câu trích ≤ 6 từ; 53 câu trích bị dùng lại cho ≥ 3 dòng khác nhau (214 trích dẫn) —
+  dùng lại hợp lệ khi bảng tra lặp lại đúng một sự thật, sai khi gắn cho câu nói điều khác.
+
+## Việc vòng 5 — soát nghĩa (máy không làm thay được)
+
+Với **mọi** dòng có câu trích ≤ 6 từ hoặc câu trích dùng cho ≥ 3 dòng (danh sách: chạy lệnh dưới):
+
+```bash
+$PY - <<'PY'
+import re, collections
+from pathlib import Path
+Q = re.compile(r'\[(K\d+) ([\d:]+) "([^"]+)"\]'); use = collections.defaultdict(list)
+for md in Path(".claude/skills/cascadeur-animation").rglob("*.md"):
+    for no, l in enumerate(md.read_text(encoding="utf-8").splitlines(), 1):
+        for k, t, q in Q.findall(l): use[(k, t, q)].append(f"{md.name}:{no}")
+for (k, t, q), where in use.items():
+    if len(q.split()) <= 6 or len(set(where)) >= 3: print(f'[{k} {t} "{q}"]', "→", ", ".join(where))
+PY
+```
+
+hỏi đúng một câu: **"Chỉ đọc câu trích, có suy ra được câu tiếng Việt không?"**
+- Có ⇒ giữ. Một phần ⇒ cắt câu tiếng Việt cho vừa đúng câu trích. Không ⇒ tìm câu trích đúng (ở mốc
+  khác) hoặc xoá câu tiếng Việt.
+- Định nghĩa/khái niệm chung (vd "AutoPhysics là…") phải có câu trích *định nghĩa* thật; không có ⇒ xoá.
+
+Cổng máy vẫn phải xanh. Bàn giao: số dòng giữ / cắt / đổi câu trích / xoá, output 2 cổng, `git status --short`.
+Claude sẽ lấy 10 mẫu **trong chính danh sách trên** + 10 mẫu ngẫu nhiên; PASS khi ≥ 9/10 ở cả hai.
