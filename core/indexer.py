@@ -1,6 +1,7 @@
 """Skills wiki storage on disk with SQLite run stats and hybrid search."""
 from __future__ import annotations
 
+import json
 import logging
 import math
 import re
@@ -9,16 +10,12 @@ import sqlite3
 from pathlib import Path
 from typing import Callable, Optional
 
-from .models import SkillBundle, SkillMetadata, SkillSummary
+from .models import KnowledgeSkill, SkillBundle, SkillMetadata, SkillSummary
+from .text import tokenize as _tokenize
 
 logger = logging.getLogger("skillforge.indexer")
 
-_TOKEN_RE = re.compile(r"[a-z0-9]+")
-
-
-def _tokenize(text: str) -> list[str]:
-    """Extract lowercase alphanumeric tokens."""
-    return _TOKEN_RE.findall(text.lower())
+_SAFE_REL = re.compile(r"^[A-Za-z0-9_.\-/]+$")
 
 
 class SkillWiki:
@@ -28,6 +25,7 @@ class SkillWiki:
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self._db_path = self.root / ".stats.sqlite"
+        self._meta_cache: tuple[tuple[int, int], list[SkillMetadata]] | None = None
         self._init_db()
 
     def _get_db(self) -> sqlite3.Connection:
@@ -80,35 +78,110 @@ class SkillWiki:
                 ext = src.suffix or ".png"
                 shutil.copy(src, d / f"asset{ext}")
 
+        self._meta_cache = None
         logger.info("Saved skill '%s' to %s", bundle.metadata.id, d)
         return d
 
+    def save_knowledge(self, skill: KnowledgeSkill, status: str = "draft",
+                       eval_score: float | None = None, gate_issues: list[str] | None = None) -> Path:
+        """Save a knowledge skill: SKILL.md + references/ + assets/ + SOURCES.md + skill.json."""
+        taxonomy = f"{skill.domain}/{skill.plan.category}/{skill.plan.name.replace('-', '_')}"
+        meta = SkillMetadata(
+            name=skill.plan.title,
+            taxonomy_path=taxonomy,
+            description=skill.plan.description,
+            tags=sorted({skill.domain, skill.plan.category, *skill.plan.name.split("-")}),
+            runner="none",
+            kind="knowledge",
+            skill_name=skill.plan.name,
+            status=status,  # type: ignore[arg-type]
+            license=skill.license,
+            sources=skill.sources,
+            source=skill.sources[0] if skill.sources else "",
+            eval_score=eval_score,
+            gate_issues=gate_issues or [],
+        )
+        d = self._dir(meta.id)
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "SKILL.md").write_text(skill.skill_md(), encoding="utf-8")
+        if skill.sources_md:
+            (d / "SOURCES.md").write_text(skill.sources_md, encoding="utf-8")
+        for rel, content in skill.references.items():
+            target = self._child(d, rel)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+        for rel, src in skill.assets.items():
+            target = self._child(d, rel)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if Path(src).exists():
+                shutil.copy(src, target)
+        if skill.quiz:
+            (d / "quiz.json").write_text(
+                json.dumps([q.model_dump() for q in skill.quiz], ensure_ascii=False, indent=2),
+                encoding="utf-8")
+        (d / "skill.json").write_text(meta.model_dump_json(indent=2), encoding="utf-8")
+        self._meta_cache = None
+        logger.info("Saved knowledge skill '%s' to %s", meta.id, d)
+        return d
+
+    @staticmethod
+    def _child(base: Path, rel: str) -> Path:
+        """Resolve a relative file inside a skill dir, rejecting traversal."""
+        if not rel or not _SAFE_REL.match(rel) or ".." in rel.split("/"):
+            raise ValueError(f"Unsafe relative path: {rel!r}")
+        target = (base / rel).resolve()
+        target.relative_to(base.resolve())
+        return target
+
+    def read_file(self, skill_id: str, rel: str = "SKILL.md") -> str:
+        """Read a text file inside a skill (SKILL.md, references/x.md, SOURCES.md...)."""
+        return self._child(self._dir(skill_id), rel).read_text(encoding="utf-8")
+
+    def list_files(self, skill_id: str) -> list[str]:
+        d = self._dir(skill_id)
+        return sorted(p.relative_to(d).as_posix() for p in d.rglob("*")
+                      if p.is_file() and not p.name.startswith("."))
+
     def load(self, skill_id: str) -> SkillBundle:
-        """Load a skill bundle from the wiki."""
+        """Load a skill bundle from the wiki. Knowledge skills carry SKILL.md as payload."""
         d = self._dir(skill_id)
         meta_path = d / "skill.json"
         code_path = d / "run.py"
 
-        if not meta_path.exists() or not code_path.exists():
+        if not meta_path.exists():
             raise KeyError(f"Skill not found: {skill_id}")
-
         meta = SkillMetadata.model_validate_json(meta_path.read_text(encoding="utf-8"))
-        code = code_path.read_text(encoding="utf-8")
+        if meta.kind == "knowledge":
+            skill_md = d / "SKILL.md"
+            code = skill_md.read_text(encoding="utf-8") if skill_md.exists() else ""
+        elif code_path.exists():
+            code = code_path.read_text(encoding="utf-8")
+        else:
+            raise KeyError(f"Skill not found: {skill_id}")
 
         # Discover visual asset if present
         asset = next(iter(sorted(d.glob("asset.*"))), None)
         return SkillBundle(metadata=meta, code_payload=code, visual_asset_path=asset)
 
     def all_metadata(self) -> list[SkillMetadata]:
-        """Scan wiki directory and return metadata of all stored skills."""
+        """Scan wiki directory and return metadata of all stored skills.
+
+        Cached and invalidated by the newest skill.json mtime, so a search no
+        longer re-parses every file on each query.
+        """
+        files = sorted(self.root.rglob("skill.json"))
+        stamp = (len(files), max((f.stat().st_mtime_ns for f in files), default=0))
+        if self._meta_cache is not None and self._meta_cache[0] == stamp:
+            return list(self._meta_cache[1])
         out: list[SkillMetadata] = []
-        for f in sorted(self.root.rglob("skill.json")):
+        for f in files:
             try:
                 out.append(SkillMetadata.model_validate_json(f.read_text(encoding="utf-8")))
             except Exception as exc:
                 logger.warning("Failed parsing %s: %s", f, exc)
                 continue
-        return out
+        self._meta_cache = (stamp, out)
+        return list(out)
 
     # ---- execution telemetry -------------------------------------------
     def record_run(self, skill_id: str, ok: bool) -> None:
@@ -128,6 +201,12 @@ class SkillWiki:
                 return 0.0
             runs, ok = row["runs"], row["ok"]
             return (ok / runs) * math.log1p(runs)
+
+    def _all_reliability(self) -> dict[str, float]:
+        """One query for every skill instead of one connection per skill per search."""
+        with self._get_db() as conn:
+            rows = conn.execute("SELECT id, runs, ok FROM stats WHERE runs > 0").fetchall()
+        return {r["id"]: (r["ok"] / r["runs"]) * math.log1p(r["runs"]) for r in rows}
 
     # ---- hybrid search -------------------------------------------------
     @staticmethod
@@ -160,6 +239,7 @@ class SkillWiki:
         q_tokens = _tokenize(query)
         scorer = custom_scorer or self.default_lexical_scorer
         results: list[SkillSummary] = []
+        reliability_by_id = self._all_reliability()
 
         for m in self.all_metadata():
             if domain and m.domain != domain:
@@ -172,7 +252,7 @@ class SkillWiki:
                 continue
 
             # Reliability bonus from past successful runs + validation boost
-            reliability = self._reliability(m.id)
+            reliability = reliability_by_id.get(m.id, 0.0)
             status_boost = 0.5 if m.status == "validated" else 0.0
             total_score = base_score + reliability + status_boost
 
@@ -185,6 +265,7 @@ class SkillWiki:
                     tags=m.tags,
                     status=m.status,
                     score=round(total_score, 3),
+                    kind=m.kind,
                 )
             )
 

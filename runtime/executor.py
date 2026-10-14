@@ -5,6 +5,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import uuid
 from pathlib import Path
@@ -20,6 +21,15 @@ def _is_docker_enabled() -> bool:
     """Check if Docker isolation is enabled via environment."""
     val = os.environ.get("SKILLFORGE_USE_DOCKER", "false").lower()
     return val in ("1", "true", "yes", "on")
+
+
+_SECRET_ENV = re.compile(r"(KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH|COOKIE|SESSION)", re.I)
+
+
+def _safe_env() -> dict[str, str]:
+    """Host env minus secrets: skill code is LLM-generated from untrusted sources,
+    so it must never see ANTHROPIC_API_KEY, GH_TOKEN, cloud credentials, ..."""
+    return {k: v for k, v in os.environ.items() if not _SECRET_ENV.search(k)}
 
 
 def _build_command(
@@ -94,7 +104,7 @@ async def execute_code(
             run_dir=str(run_dir),
         )
 
-    env = {**os.environ, "SKILL_OUTPUT_DIR": str(out_dir)}
+    env = {**_safe_env(), "SKILL_OUTPUT_DIR": str(out_dir)}
     logger.debug("Executing [%s] (docker=%s) in %s", runner, docker_flag, run_dir)
 
     try:
@@ -102,6 +112,7 @@ async def execute_code(
             *cmd,
             cwd=run_dir,
             env=env,
+            stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -158,6 +169,14 @@ async def run_skill(
     """Execute a skill from the wiki, validating status and recording telemetry."""
     bundle = wiki.load(skill_id)
     meta: SkillMetadata = bundle.metadata
+
+    if meta.kind == "knowledge":
+        return ExecutionResult(
+            success=False,
+            return_code=2,
+            stderr=f"Skill '{skill_id}' is a knowledge skill (nothing to execute); "
+                   f"read it with get_skill_details / read_skill_file",
+        )
 
     if meta.status != "validated" and not allow_draft:
         logger.warning("Refusing to execute unvalidated skill '%s' (status: %s)", skill_id, meta.status)

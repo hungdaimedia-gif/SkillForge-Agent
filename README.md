@@ -107,6 +107,48 @@ All offline unit tests run against `FakeRepairLLM` without requiring an active A
 
 ---
 
+## Distill YouTube playlists & books into offline skills
+
+Most knowledge in tutorials and books is *procedural* (UI steps, hotkeys, rules of
+thumb), not code. `skillforge distill` turns a playlist or a book into **knowledge
+skills** — `SKILL.md` + `references/` + `assets/` (keyframes) + `SOURCES.md` — that an
+agent reads later **without internet**.
+
+```bash
+uv pip install -e ".[llm,youtube,books,dev]"      # + ffmpeg on PATH (whisper optional)
+
+# 1. Cache transcripts + 720p keyframes (no LLM, re-runs are free)
+skillforge fetch "https://www.youtube.com/playlist?list=..."
+
+# 2. Distill: map (units per video, frames really sent) -> plan (skills) -> write -> gate -> quiz
+skillforge distill "https://www.youtube.com/playlist?list=..." --domain cascadeur --lang vi
+skillforge distill book.pdf --domain animation-principles --lang vi
+
+# 3. Install into an agent's skill folder (never overwrites existing folders)
+skillforge export cascadeur --to ~/.claude/skills
+```
+
+| Stage | What it guarantees |
+|---|---|
+| map | every unit carries anchors (`1:23`, `p.87`); invented/out-of-range anchors are dropped |
+| plan | units grouped by *capability*, plus a hub skill (glossary, hotkey cheat sheet, routing) |
+| write | every statement cited `[S3 1:23]`; long detail moved to `references/` |
+| gate | kebab-case name, "Use when…" description, length, every citation/asset/link resolvable |
+| eval | closed-book quiz: an agent with only the skill must answer source questions (`--min-eval 0.7`) |
+
+**Agents:** the step-by-step operating procedure (env check, source survey, fixing draft
+skills with `--redo`, review checklist, troubleshooting) is packaged as the Claude Code skill
+[`.claude/skills/skillforge-distill`](.claude/skills/skillforge-distill/SKILL.md) — picked up
+automatically when you open this repo in Claude Code.
+
+LLM backend (`--llm` / `SKILLFORGE_LLM`): `api` (needs `ANTHROPIC_API_KEY`), `claude-cli`
+(headless `claude -p`, uses your Claude login), or `auto`. Intermediate results live in
+`work/<domain>/` so an interrupted run resumes without re-paying. Book skills only
+paraphrase (`license: book_paraphrase_only`); downloaded media stays in `sources_cache/`
+(git-ignored).
+
+---
+
 ## CLI Usage (`skillforge`)
 
 The CLI provides commands for every stage of the lifecycle:
