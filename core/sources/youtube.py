@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,8 @@ from ..text import fmt_ts
 logger = logging.getLogger("skillforge.sources.youtube")
 
 CACHE_VERSION = 3  # bump when doc.json layout/logic changes; old caches are rebuilt
+SUB_CLIENTS = ([], ["--extractor-args", "youtube:player_client=android"],
+               ["--extractor-args", "youtube:player_client=web_safari,tv"])
 VIDEO_HEIGHT = int(os.environ.get("SKILLFORGE_VIDEO_HEIGHT", "720"))
 _VIDEO_ID = re.compile(r"(?:v=|youtu\.be/|shorts/|embed/)([A-Za-z0-9_-]{11})")
 
@@ -170,9 +173,18 @@ def fetch_transcript(url: str, vdir: Path, info: dict, lang: str = "en",
         stem = "msubs" if label == "manual_subs" else "asubs"
         sub_file, code = _pick_sub_file(vdir, lang, stem)
         if sub_file is None:
-            ytdlp(flag, "--sub-langs", f"{lang},{lang}-orig,{lang}.*", "--sub-format", "json3",
-                  "--skip-download", "-o", str(vdir / f"{stem}.%(ext)s"), url, timeout=300)
-            sub_file, code = _pick_sub_file(vdir, lang, stem)
+            # YouTube answers HTTP 429 for caption requests after many videos in a row
+            # (2026-10-14, playlist of 93); the android client still serves captions in
+            # seconds, so retry with other clients before paying minutes of whisper CPU.
+            for i, client_args in enumerate(SUB_CLIENTS):
+                if i:
+                    time.sleep(2)
+                ytdlp(*client_args, flag, "--sub-langs", f"{lang},{lang}-orig,{lang}.*",
+                      "--sub-format", "json3", "--skip-download",
+                      "-o", str(vdir / f"{stem}.%(ext)s"), url, timeout=300)
+                sub_file, code = _pick_sub_file(vdir, lang, stem)
+                if sub_file is not None:
+                    break
         if sub_file is None:
             continue
         segs = parse_json3(sub_file)
