@@ -99,3 +99,41 @@ cam.zoom_to_points([np.array([x, y, z], dtype=np.float32) for ...])   # chạy �
 Còn có `cam.set_target(np.array([...], dtype=np.float32))`,
 `ViewportDomain.camera_struct()` / `set_camera_struct(SphericalCameraStruct)` (target,
 position, type) — chưa thử.
+
+## ✅ Rig một con vật bốn chân từ đầu (Blender Rigify → Cascadeur), 2026-10-14
+
+Đã chạy trọn trên Cascadeur 2026.2.3 + Blender 4.5.14 LTS (bản Microsoft Store). Script đầy đủ trong
+`scripts/examples/`.
+
+1. **Blender (nền):** `build_horse.py` — khung xương ngựa Rigify (`armature_horse_metarig_add`,
+   70 xương) → mesh thô bằng Skin modifier → gắn xương tự động → xuất `horse_crude.fbx`.
+   - Blender bản Store chỉ chạy được qua `%LOCALAPPDATA%\Microsoft\WindowsApps\blender-launcher.exe`
+     (gọi thẳng exe trong `WindowsApps` bị "Access is denied"); launcher không trả stdout ⇒ script tự ghi
+     kết quả/lỗi ra file.
+   - Xương Rigify (chân, đuôi) tách rời thân: nối mỗi xương với xương cha trước khi tạo khối.
+2. **Nhập FBX vào scene mới:**
+   ```python
+   a = app.get_scene_manager().create_application_scene(); app.get_scene_manager().set_current_scene(a)
+   app.get_tools_manager().get_tool("FbxSceneLoader").get_fbx_loader(a).import_model(r"...\horse_crude.fbx")
+   ```
+3. **Bật Rig mode:** `import rig_mode.on as rm_on; rm_on.run_raw(scene, [0.0, 0.5, 0.0])`
+   (`RiggingModeTool` editor `get_joints_data()` → 70 xương).
+4. **Quick Rigging bốn chân bằng code** (`step2_quadruped_qrt.py`):
+   - `csc.rig.QrtData().quadruped = [csc.rig.QuadrupedBoneProperty()]`; 5 nhóm `trunk`, `left_fore_paw`,
+     `right_fore_paw`, `left_hind_paw`, `right_hind_paw`, **mỗi nhóm là `list[list[csc.rig.BoneProperty]]`**.
+   - `BoneProperty.bone_name` = tên điểm chuẩn trong `resources/autorig_templates/Quadruped.qrigcasc`
+     (`pelvis, spine_1..3, neck_1, neck_2, head, head_end, tail_1..4, tail_end, scapula_l, humerus_l,
+     radius_l, carpals_l, paw_f_l, femur_l, tibia_l, tarsals_l, paw_h_l` + bản `_r`); `object_id` = xương;
+     `joint_path_name = csc.model.PathName.get_path_name(obj_id, scene.model_viewer())`.
+   - Gọi `prototypes.qrt_prototypes.create.create_quadruped_rig(scene, q, 15.0, 30.0, [0.0, 0.5, 0.0], "")`
+     (độ dài cm). Kết quả: +209 object.
+5. **Thoát Rig mode để dựng rig:** `import rig_mode.off as rm_off; rm_off.run(scene, True)` → RigInfo 1,
+   64 Point, 29 RigidBody, CenterOfMass, 4 FulcrumGroup (4 móng), Ragdoll.
+   - ⚠️ **AutoPosing cho động vật bốn chân cần giấy phép Pro**: bản Basic/Indie hiện hộp thoại "AutoPosing for
+     Quadruped is not available…" (người dùng bấm Close — agent không bấm Upgrade).
+6. **Tạo key và di chuyển điểm điều khiển** (`step4_lift_hoof.py`, callback 3 tham số của `modify_update`):
+   - Scene mới chỉ có 1 khung ⇒ **đặt key trên mọi layer trước** (`layers_editor().set_fixed_interpolation_or_key_if_need(layer, f, True)`),
+     rồi `model.fit_animation_size_by_layers()`, sau đó mới `node_deep("Position").set_value(v, f)` +
+     `normalize_sections(scene)` + `scene_updater.run_update({pos.data_id()}, f)`.
+   - Kiểm chứng bằng số: nâng `f_toe.L_MainPoint` 40 cm ở khung 10 ⇒ xương `f_toe.L` y 22,1→62,1,
+     `forearm.L` tự gập (IK), móng phải không đổi.

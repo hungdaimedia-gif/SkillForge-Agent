@@ -54,6 +54,7 @@ Chi tiết + code đầy đủ: [references/recipes.md](references/recipes.md).
 | Số khung animation | `scene.layers_viewer().frames_count()` |
 | Danh sách object | `scene.model_viewer().get_objects()` |
 | Mở `.casc` vào scene mới | `sm = app.get_scene_manager(); a = sm.create_application_scene(); sm.set_current_scene(a); csc.app.ProjectLoader.load_from(path, a.domain_scene())` |
+| Rig động vật bốn chân, tạo key | xem `references/recipes.md` mục "Rig một con vật bốn chân" |
 | Vị trí toàn cục (cm) | `import pycsc; o.get_behaviour("Transform").global_position.get()` với `o in pycsc.get_scene_objects()` |
 | Chụp khung nhìn | `casc.py shot out.png --frame N` (dùng `screen().grabWindow(winId)`) |
 
@@ -78,6 +79,7 @@ Chi tiết + code đầy đủ: [references/recipes.md](references/recipes.md).
 - **Đưa camera về nhân vật:** `Camera.zoom_to_points([...])` chạy không lỗi nhưng khung nhìn
   hầu như không đổi trong thử nghiệm; hộp bao lấy từ mọi object bị lệch vì có object phụ trợ.
   Hướng chưa thử: lọc khớp theo tên rồi dùng `ViewportDomain.set_camera_struct`.
+- **AutoPosing bốn chân** cần giấy phép Pro (Basic/Indie báo "not available").
 - **Danh sách action:** `ActionManager` chỉ có `call_action(name)`, không liệt kê được tên;
   tên đã biết từ script chính hãng: `Scene.Undo`.
 - `QWindow.grabWindow()` không tồn tại trong bản PySide6 của Cascadeur — dùng `screen().grabWindow`.
