@@ -1,0 +1,38 @@
+{
+  "name": "AI Software Factory Engineering",
+  "taxonomy_path": "agentic/software_factory/ai_software_factory",
+  "description": "Blueprint, architecture, and execution harness for building an AI Software Factory (Level 5 Agentic SDLC) with release scoping, holdout test scenarios, dual-review gating, manager watchdog, and staging loops, distilled from Cole Medin's Port SDLC video.",
+  "tags": [
+    "agentic",
+    "software-factory",
+    "dark-factory",
+    "sdlc",
+    "holdout-scenarios",
+    "dual-review",
+    "manager-agent",
+    "git-worktrees"
+  ],
+  "params_schema": {},
+  "example_params": {},
+  "runner": "none",
+  "expected_artifacts": [
+    "SKILL.md",
+    "SOURCES.md",
+    "references/architecture.md",
+    "references/holdout_scenarios.md",
+    "references/core_loop_and_dual_review.md",
+    "references/manager_agent.md"
+  ],
+  "expected_output": "SKILL.md",
+  "source": "https://youtu.be/GQatuTWSRqY",
+  "status": "validated",
+  "timeout_s": 120,
+  "kind": "knowledge",
+  "skill_name": "ai-software-factory",
+  "license": "mit",
+  "sources": [
+    "https://youtu.be/GQatuTWSRqY"
+  ],
+  "eval_score": 1.0,
+  "gate_issues": []
+}

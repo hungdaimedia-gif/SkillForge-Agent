@@ -1,0 +1,34 @@
+[
+  {
+    "question": "Why does a monolithic Level 5 Dark Factory fail in practice?",
+    "answer": "Because LLMs cannot read human minds; the bottleneck is intent translation and communication rather than coding capability. Without feedback loops and scoped boundaries, errors compound and codebase sprawl degrades maintainability.",
+    "anchors": [
+      "03:31",
+      "04:44"
+    ]
+  },
+  {
+    "question": "What is a holdout scenario and why is it quarantined from the builder agent?",
+    "answer": "A holdout scenario is an evaluation test scenario withheld from the builder agent to prevent sycophantic test overfitting, where the agent hardcodes edge cases just to satisfy tests without robust software architecture.",
+    "anchors": [
+      "10:55",
+      "11:45"
+    ]
+  },
+  {
+    "question": "What are the two distinct gates in the dual-review system?",
+    "answer": "Gate 1 is App Validation, which simulates real user interactions and runs holdout scenarios to verify functional behavior. Gate 2 is Code Review, which audits maintainability, architectural simplicity, and security.",
+    "anchors": [
+      "14:26",
+      "15:15"
+    ]
+  },
+  {
+    "question": "What is the primary role of the periodic Manager Watchdog Agent?",
+    "answer": "It surveys factory health every 2-3 hours, cleans orphaned locks and processes, unblocks downstream tasks in the dependency DAG, and escalates truly stuck tasks to human engineers.",
+    "anchors": [
+      "15:33",
+      "16:35"
+    ]
+  }
+]
