@@ -1,0 +1,43 @@
+{
+  "description": "Generate a short MP4 video clip from a text prompt. Providers: 'minimax' = real AI video via a MiniMax-compatible API (same protocol as HungDai-Flow-Director's metaso provider; needs VIDEO_API_URL/VIDEO_API_KEY), 'local' = procedural animation rendered offline with ffmpeg (no key needed), 'auto' = minimax when configured else local.",
+  "example_params": {
+    "duration_s": 2,
+    "fps": 12,
+    "height": 240,
+    "prompt": "ocean waves",
+    "provider": "local",
+    "width": 320
+  },
+  "expected_artifacts": [
+    "output.mp4"
+  ],
+  "expected_output": "output.mp4",
+  "name": "Generate video",
+  "params_schema": {
+    "api_key": "string",
+    "api_url": "string",
+    "duration_s": "number",
+    "fps": "integer",
+    "height": "integer",
+    "model": "string",
+    "prompt": "string",
+    "provider": "string",
+    "ratio": "string",
+    "resolution": "string",
+    "seed": "integer",
+    "width": "integer"
+  },
+  "runner": "python",
+  "source": "Muse (agent-authored, integrated with HungDai-Flow-Director MiniMax provider)",
+  "status": "validated",
+  "tags": [
+    "video",
+    "generate",
+    "mp4",
+    "media",
+    "animation",
+    "minimax"
+  ],
+  "taxonomy_path": "media/video/generate",
+  "timeout_s": 600
+}

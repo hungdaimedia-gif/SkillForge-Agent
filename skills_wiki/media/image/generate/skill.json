@@ -1,0 +1,35 @@
+{
+  "name": "Generate image",
+  "taxonomy_path": "media/image/generate",
+  "description": "Generate a PNG image from a text prompt. Deterministic offline procedural renderer using Python standard library (no dependencies), with optional API provider override via IMAGE_API_URL / IMAGE_API_KEY.",
+  "tags": [
+    "image",
+    "generate",
+    "png",
+    "media"
+  ],
+  "params_schema": {
+    "api_key": "string",
+    "api_url": "string",
+    "height": "integer",
+    "prompt": "string",
+    "seed": "integer",
+    "style": "string",
+    "width": "integer"
+  },
+  "example_params": {
+    "prompt": "a serene landscape",
+    "width": 512,
+    "height": 512,
+    "style": "gradient",
+    "seed": 0
+  },
+  "runner": "python",
+  "expected_artifacts": [
+    "image.png"
+  ],
+  "expected_output": "image.png",
+  "source": "Muse (agent-authored)",
+  "status": "validated",
+  "timeout_s": 120
+}
